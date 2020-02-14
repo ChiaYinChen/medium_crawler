@@ -12,7 +12,8 @@ color_formatter = ColoredFormatter(
     (
         '%(log_color)s%(levelname)-5s%(reset)s '
         '%(yellow)s[%(asctime)s]%(reset)s'
-        '%(white)s %(name)s %(funcName)s %(bold_purple)s:%(lineno)d%(reset)s '
+        '%(white)s %(name)s %(funcName)s '
+        '%(bold_purple)s:%(lineno)d%(reset)s '
         '%(log_color)s%(message)s%(reset)s'
     ),
     datefmt='%y-%m-%d %H:%M:%S',
