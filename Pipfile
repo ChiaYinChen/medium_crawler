@@ -1,0 +1,14 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+flake8 = "==3.7.9"
+
+[packages]
+scrapy = "==1.8.0"
+python-dateutil = "==2.8.0"
+
+[requires]
+python_version = "3.7"
