@@ -1,5 +1,6 @@
-.git
-.gitignore
+**/.git
+**/.gitignore
 .dockerignore
 .envrc
-__pycache__/
+**/__pycache__
+README.md
