@@ -68,7 +68,6 @@ class MediumPost(MediumBase, scrapy.Spider):
                 yield scrapy.Request(
                     url=f'{url}?format=json',
                     callback=self.post
-
                 )
         elif self.usernames:
             for username in self.usernames:

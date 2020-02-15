@@ -1,5 +1,6 @@
 """Scrapy settings."""
 import os
+
 BOT_NAME = 'medium_crawler'
 SPIDER_MODULES = ['medium_crawler.spiders']
 NEWSPIDER_MODULE = 'medium_crawler.spiders'
