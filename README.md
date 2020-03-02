@@ -22,24 +22,39 @@ $ pipenv install --dev
 | PROXY_ENABLED                 | FALSE                 | YES         |
 | PROXY_DEPTH                   | 0                     | YES         |
 
+## Usage
+
+Run a spider via `scrapy crawl`
+
+```
+$ scrapy crawl medium -a usernames=chiayinchen -a date=20180801
+$ scrapy crawl medium -a urls=https://medium.com/8045c82962e2/be290cd1f9d8
+```
+
+Run a spider from a script
+
+```
+$ python medium_crawler/run.py --spider medium
+```
+
 ---
 
-## Docker
+# Docker
 
 Build docker image
 
 ```
-$ docker build -t <image name>:<image tag> . --no-cache
+$ docker build -t medium-crawler:<version> . --no-cache
 ```
 
 Build docker container
 
 ```
-$ docker run --rm -it -d --name <container name> <image name>:<image tag>
+$ docker run --rm -it -d --name <container_name> medium-crawler:<version>
 ```
 
 Run a command in a running container
 
 ```
-$ docker exec -it <container name> sh
+$ docker exec -it <container_name> sh
 ```
