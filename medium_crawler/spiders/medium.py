@@ -9,18 +9,26 @@ import scrapy
 from .. import items
 
 
-class MediumBase:
-    """Mixin for medium spider."""
+class MediumPost(scrapy.Spider):
+    """Crawl medium post."""
 
-    def __init__(self, usernames=None, date=None,
-                 back=None, urls=None, **kwargs):
-        """Pass extra arguments.
+    name = 'medium'
+
+    def __init__(self, *args, **kwargs):
+        """Pass extra arguments for spider.
 
         :params: usernames: comma-separated medium usernames.
         :params: date: crawling date (YYYYMMDD).
         :params: back: number of days to be crawled.
         :params: urls: comma-separated url list.
         """
+        super().__init__(*args, **kwargs)
+        rule = vars(kwargs.get('rule')) if kwargs.get('rule') else {}
+        usernames = kwargs.get('usernames') or rule.get('username')
+        date = kwargs.get('date') or rule.get('date')
+        back = kwargs.get('back') or rule.get('back')
+        urls = kwargs.get('urls') or rule.get('url')
+
         if date:
             self.start_date = datetime.strptime(date, '%Y%m%d')
         else:
@@ -42,16 +50,6 @@ class MediumBase:
             self.urls = urls.strip().split(',')
         else:
             self.urls = None
-
-
-class MediumPost(MediumBase, scrapy.Spider):
-    """Crawl medium post."""
-
-    name = 'medium'
-
-    def __init__(self, *args, **kwargs):
-        """Init."""
-        super().__init__(*args, **kwargs)
         self.pagination_url = (
             '{path}?limit={limit}&to={to}&'
             'source={source}&page={page}'
