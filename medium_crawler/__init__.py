@@ -3,7 +3,7 @@ import copy
 import scrapy.utils.log
 from colorlog import ColoredFormatter
 
-__version_info__ = (0, 0, 1)
+__version_info__ = (0, 0, 3)
 __version__ = '.'.join(str(_) for _ in __version_info__)
 
 
