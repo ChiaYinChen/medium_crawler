@@ -2,6 +2,7 @@
 import json
 import logging
 from datetime import datetime, timedelta
+from typing import Iterator, Union
 
 import dateutil.parser as dp
 import scrapy
@@ -14,13 +15,17 @@ class MediumPost(scrapy.Spider):
 
     name = 'medium'
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         """Pass extra arguments for spider.
 
-        :params: usernames: comma-separated medium usernames.
-        :params: date: crawling date (YYYYMMDD).
-        :params: back: number of days to be crawled.
-        :params: urls: comma-separated url list.
+        If `urls` is set, `usernames` will be ignored.
+
+        Args:
+            usernames (Union[str, None]): comma-separated medium usernames
+            date (Union[str, None]): crawling date (YYYYMMDD)
+            back (Union[str, int, None]): number of days to be crawled
+            urls (Union[str, None]): comma-separated url list
+            rule (Union[models.Rule, None]): pass arguments from database
         """
         super().__init__(*args, **kwargs)
         rule = vars(kwargs.get('rule')) if kwargs.get('rule') else {}
@@ -59,8 +64,12 @@ class MediumPost(scrapy.Spider):
             'limit={limit}&to={to}'
         )
 
-    def start_requests(self):
-        """Start request."""
+    def start_requests(self) -> Iterator[scrapy.Request]:
+        """Start requests.
+
+        Yields:
+            scrapy.Request: scrapy request object
+        """
         if self.urls:
             for url in self.urls:
                 yield scrapy.Request(
@@ -76,8 +85,17 @@ class MediumPost(scrapy.Spider):
                     callback=self.parse_links
                 )
 
-    def parse_links(self, response, _next=True):
-        """Extract links from medium API."""
+    def parse_links(self, response: scrapy.http.Response,
+                    _next: bool = True) -> Iterator[scrapy.Request]:
+        """Extract links from medium API.
+
+        Args:
+            response (scrapy.http.Response): scrapy response
+            _next (bool): if true, continue to crawl the next page
+
+        Yields:
+            scrapy.Request: scrapy request object
+        """
         obj = json.loads(response.text.replace('])}while(1);</x>', '', 1))
         if response.meta.get('user_id'):
             user_id = response.meta['user_id']
@@ -124,8 +142,18 @@ class MediumPost(scrapy.Spider):
                 callback=self.parse_links
             )
 
-    def post(self, response):
-        """Get medium posts."""
+    def post(
+        self, response: scrapy.http.Response
+    ) -> Union[Iterator[items.ArticleItem], Iterator[scrapy.Request]]:
+        """Get medium posts.
+
+        Args:
+            response (scrapy.http.Response): scrapy response
+
+        Yields:
+            items.ArticleItem: ArticleItem object
+            scrapy.Request: scrapy request object
+        """
         data = response.text.replace('])}while(1);</x>', '', 1)
         obj = json.loads(data)['payload']
         link = obj['value']['mediumUrl']
@@ -166,8 +194,17 @@ class MediumPost(scrapy.Spider):
                 callback=self.comment
             )
 
-    def comment(self, response):
-        """Get medium comments."""
+    def comment(
+        self, response: scrapy.http.Response
+    ) -> Iterator[scrapy.Request]:
+        """Get medium comments.
+
+        Args:
+            response (scrapy.http.Response): scrapy response
+
+        Yields:
+            scrapy.Request: scrapy request object
+        """
         post_record = response.meta['post_record']
         data = response.text.replace('])}while(1);</x>', '', 1)
         obj = json.loads(data)
@@ -220,8 +257,17 @@ class MediumPost(scrapy.Spider):
                 callback=self.comment
             )
 
-    def get_comment_author_name(self, response):
-        """Get comment author name."""
+    def get_comment_author_name(
+        self, response: scrapy.http.Response
+    ) -> Iterator[items.ArticleItem]:
+        """Get comment author name.
+
+        Args:
+            response (scrapy.http.Response): scrapy response
+
+        Yields:
+            items.ArticleItem: ArticleItem object
+        """
         comment_record = response.meta['comment_record']
         author_id = response.meta['author_id']
         data = response.text.replace('])}while(1);</x>', '', 1)
