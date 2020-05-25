@@ -194,6 +194,49 @@ class MediumPost(scrapy.Spider):
                 callback=self.comment
             )
 
+    def parse_comment_item(
+        self, posts: dict, response: scrapy.http.Response
+    ) -> Iterator[scrapy.Request]:
+        """Parse medium comment item.
+
+        Args:
+            posts (dict): medium comment items
+            response (scrapy.http.Response): scrapy response
+
+        Yields:
+            scrapy.Request: scrapy request object
+        """
+        post_record = response.meta['post_record']
+        for post_id, post_item in posts.items():
+            if post_id != response.meta['post_id']:
+                post = posts[post_id]
+                author_id = post['creatorId']
+                content = '\n'.join([i['text'] for i in post['previewContent2']['bodyModel']['paragraphs']])  # noqa: E501
+                comment_count = int(post['virtuals']['responsesCreatedCount'])  # noqa: E501
+                like_count = int(post['virtuals']['totalClapCount'])  # noqa: E501
+                created_time = datetime.fromtimestamp(post['createdAt'] / 1000)  # noqa: E501
+                link = f'https://medium.com/{author_id}/{post_id}'
+                comment_record = items.ArticleItem(
+                    uid=post_record['uid'],
+                    link=link,
+                    author_id=author_id,
+                    poster=post_record['author'],
+                    title=post_record['title'],
+                    content=content,
+                    comment_count=comment_count,
+                    like_count=like_count,
+                    created_time=created_time,
+                    article_type='comment',
+                )
+                yield scrapy.Request(
+                    url=f'{link}?format=json',
+                    meta={
+                        'comment_record': comment_record,
+                        'author_id': author_id
+                    },
+                    callback=self.get_comment_author_name
+                )
+
     def comment(
         self, response: scrapy.http.Response
     ) -> Iterator[scrapy.Request]:
@@ -205,40 +248,11 @@ class MediumPost(scrapy.Spider):
         Yields:
             scrapy.Request: scrapy request object
         """
-        post_record = response.meta['post_record']
         data = response.text.replace('])}while(1);</x>', '', 1)
         obj = json.loads(data)
         posts = obj.get('payload', {}).get('references', {}).get('Post')
         if posts:
-            for post_id, post_item in posts.items():
-                if post_id != response.meta['post_id']:
-                    post = posts[post_id]
-                    author_id = post['creatorId']
-                    content = '\n'.join([i['text'] for i in post['previewContent2']['bodyModel']['paragraphs']])  # noqa: E501
-                    comment_count = int(post['virtuals']['responsesCreatedCount'])  # noqa: E501
-                    like_count = int(post['virtuals']['totalClapCount'])  # noqa: E501
-                    created_time = datetime.fromtimestamp(post['createdAt'] / 1000)  # noqa: E501
-                    link = f'https://medium.com/{author_id}/{post_id}'
-                    comment_record = items.ArticleItem(
-                        uid=post_record['uid'],
-                        link=link,
-                        author_id=author_id,
-                        poster=post_record['author'],
-                        title=post_record['title'],
-                        content=content,
-                        comment_count=comment_count,
-                        like_count=like_count,
-                        created_time=created_time,
-                        article_type='comment',
-                    )
-                    yield scrapy.Request(
-                        url=f'{link}?format=json',
-                        meta={
-                            'comment_record': comment_record,
-                            'author_id': author_id
-                        },
-                        callback=self.get_comment_author_name
-                    )
+            yield from self.parse_comment_item(posts, response)
 
         # paging
         if (
