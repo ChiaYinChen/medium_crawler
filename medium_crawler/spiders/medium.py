@@ -85,6 +85,41 @@ class MediumPost(scrapy.Spider):
                     callback=self.parse_links
                 )
 
+    def parse_links_logic(
+        self,
+        response: scrapy.http.Response,
+        posts: dict,
+        user_id: str
+    ) -> Union[bool, Iterator[scrapy.Request]]:
+        """Parse links logic.
+
+        Args:
+            response (scrapy.http.Response): scrapy response
+            posts (dict): medium user post link items
+            user_id (str): user id
+
+        Yields:
+            bool: if false, stop to crawl the next post
+            scrapy.Request: scrapy request object
+        """
+        for k, v in posts.items():
+            updated_time = datetime.fromtimestamp(v['updatedAt'] / 1000)
+            if updated_time.date() < self.start_date.date():
+                _next = False
+                yield _next
+                break
+            if user_id == v['creatorId']:
+                url = (
+                    f"https://medium.com/{user_id}/{v['id']}?format=json"
+                )
+                yield scrapy.Request(
+                    url=url,
+                    meta=response.meta,
+                    callback=self.post
+                )
+            else:
+                logging.warning('Not this post creator!')
+
     def parse_links(
         self,
         response: scrapy.http.Response
@@ -106,22 +141,16 @@ class MediumPost(scrapy.Spider):
             response.meta['user_id'] = user_id
         posts = obj.get('payload', {}).get('references', {}).get('Post')
         if posts:
-            for k, v in posts.items():
-                updated_time = datetime.fromtimestamp(v['updatedAt'] / 1000)
-                if updated_time.date() < self.start_date.date():
-                    _next = False
-                    break
-                if user_id == v['creatorId']:
-                    url = (
-                        f"https://medium.com/{user_id}/{v['id']}?format=json"
-                    )
-                    yield scrapy.Request(
-                        url=url,
-                        meta=response.meta,
-                        callback=self.post
-                    )
+            stop_next_or_request = self.parse_links_logic(
+                response=response,
+                posts=posts,
+                user_id=user_id
+            )
+            for item in stop_next_or_request:
+                if isinstance(item, scrapy.http.Request):
+                    yield item
                 else:
-                    logging.warning('Not this post creator!')
+                    _next = item
         else:
             logging.warning(f'Unable to find post for {response.meta["uid"]}')
 
