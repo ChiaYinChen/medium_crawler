@@ -173,6 +173,41 @@ class MediumPost(scrapy.Spider):
                 callback=self.parse_links
             )
 
+    def parse_post_item(self, post: dict) -> Iterator[items.ArticleItem]:
+        """Parse medium post item.
+
+        Args:
+            post (dict): medium post item
+
+        Returns:
+            items.ArticleItem: ArticleItem object
+        """
+        link = post['value']['mediumUrl']
+        uid = [i[1] for i in post['references']['User'].items()][0]['username']
+        author = [i[1] for i in post['references']['User'].items()][0]['name']
+        author_id = [i[1] for i in post['references']['User'].items()][0]['userId']  # noqa: E501
+        title = post['value']['title']
+        content = '\n'.join([i['text'] for i in post['value']['content']['bodyModel']['paragraphs']])  # noqa: E501
+        comment_count = int(post['value']['virtuals']['responsesCreatedCount'])
+        like_count = int(post['value']['virtuals']['totalClapCount'])
+        created_time = datetime.fromtimestamp(post['value']['createdAt'] / 1000)  # noqa: E501
+        tag = ','.join([i['name'] for i in post['value']['virtuals']['tags']])
+        post_record = items.ArticleItem(
+            uid=uid,
+            link=link,
+            author=author,
+            author_id=author_id,
+            poster=author,
+            title=title,
+            content=content,
+            comment_count=comment_count,
+            like_count=like_count,
+            created_time=created_time,
+            article_type='post',
+            tag=tag,
+        )
+        return post_record
+
     def post(
         self,
         response: scrapy.http.Response
@@ -188,32 +223,10 @@ class MediumPost(scrapy.Spider):
         """
         data = response.text.replace('])}while(1);</x>', '', 1)
         obj = json.loads(data)['payload']
-        link = obj['value']['mediumUrl']
-        uid = [i[1] for i in obj['references']['User'].items()][0]['username']
-        author = [i[1] for i in obj['references']['User'].items()][0]['name']
-        author_id = [i[1] for i in obj['references']['User'].items()][0]['userId']  # noqa: E501
-        title = obj['value']['title']
-        content = '\n'.join([i['text'] for i in obj['value']['content']['bodyModel']['paragraphs']])  # noqa: E501
-        comment_count = int(obj['value']['virtuals']['responsesCreatedCount'])
-        like_count = int(obj['value']['virtuals']['totalClapCount'])
-        created_time = datetime.fromtimestamp(obj['value']['createdAt'] / 1000)
-        tag = ','.join([i['name'] for i in obj['value']['virtuals']['tags']])
-        post_record = items.ArticleItem(
-            uid=uid,
-            link=link,
-            author=author,
-            author_id=author_id,
-            poster=author,
-            title=title,
-            content=content,
-            comment_count=comment_count,
-            like_count=like_count,
-            created_time=created_time,
-            article_type='post',
-            tag=tag,
-        )
+        post_record = self.parse_post_item(post=obj)
         yield post_record
-        if comment_count > 0:
+
+        if post_record['comment_count'] > 0:
             post_id = obj['value']['id']
             response.meta['post_id'] = post_id
             response.meta['post_record'] = post_record
