@@ -85,17 +85,19 @@ class MediumPost(scrapy.Spider):
                     callback=self.parse_links
                 )
 
-    def parse_links(self, response: scrapy.http.Response,
-                    _next: bool = True) -> Iterator[scrapy.Request]:
+    def parse_links(
+        self,
+        response: scrapy.http.Response
+    ) -> Iterator[scrapy.Request]:
         """Extract links from medium API.
 
         Args:
             response (scrapy.http.Response): scrapy response
-            _next (bool): if true, continue to crawl the next page
 
         Yields:
             scrapy.Request: scrapy request object
         """
+        _next = True  # if true, continue to crawl the next page
         obj = json.loads(response.text.replace('])}while(1);</x>', '', 1))
         if response.meta.get('user_id'):
             user_id = response.meta['user_id']
@@ -143,7 +145,8 @@ class MediumPost(scrapy.Spider):
             )
 
     def post(
-        self, response: scrapy.http.Response
+        self,
+        response: scrapy.http.Response
     ) -> Union[Iterator[items.ArticleItem], Iterator[scrapy.Request]]:
         """Get medium posts.
 
@@ -195,7 +198,9 @@ class MediumPost(scrapy.Spider):
             )
 
     def parse_comment_item(
-        self, posts: dict, response: scrapy.http.Response
+        self,
+        posts: dict,
+        response: scrapy.http.Response
     ) -> Iterator[scrapy.Request]:
         """Parse medium comment item.
 
@@ -238,7 +243,8 @@ class MediumPost(scrapy.Spider):
                 )
 
     def comment(
-        self, response: scrapy.http.Response
+        self,
+        response: scrapy.http.Response
     ) -> Iterator[scrapy.Request]:
         """Get medium comments.
 
@@ -272,7 +278,8 @@ class MediumPost(scrapy.Spider):
             )
 
     def get_comment_author_name(
-        self, response: scrapy.http.Response
+        self,
+        response: scrapy.http.Response
     ) -> Iterator[items.ArticleItem]:
         """Get comment author name.
 
