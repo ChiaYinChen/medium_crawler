@@ -7,6 +7,7 @@ verify_ssl = true
 flake8 = "==3.7.9"
 betamax = "==0.8.1"
 pytest = "==5.4.3"
+tox = "==3.15.2"
 
 [packages]
 python-dateutil = "==2.8.0"
