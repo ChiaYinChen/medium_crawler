@@ -52,7 +52,7 @@ class TestMediumSpider:
             user_id=user_id
         )
         self._test_parse_links_logic(stop_next_or_request)
-        self.convert_to_pagination_url(obj)
+        self._test_parse_links_paging(obj)
 
     def _test_parse_links_logic(self, stop_next_or_request):
         """Test parse_links_logic."""
@@ -69,6 +69,12 @@ class TestMediumSpider:
         assert isinstance(_next, bool)
         assert _next is False
 
+    def _test_parse_links_paging(self, obj):
+        pagination_url = self.convert_to_pagination_url(obj)
+        logger.debug(f"User post's pagination url: {pagination_url}")
+        assert isinstance(pagination_url, str)
+        assert pagination_url[:4] == 'http'
+
     def convert_to_pagination_url(self, obj):
         """Convert to pagination url."""
         url = self.medium_spider.pagination_url.format(
@@ -78,6 +84,4 @@ class TestMediumSpider:
             source='latest',
             page=obj['payload']['paging']['next']['page']
         )
-        logger.debug(f"User post's pagination url: {url}")
-        assert isinstance(url, str)
-        assert url[:4] == 'http'
+        return url
