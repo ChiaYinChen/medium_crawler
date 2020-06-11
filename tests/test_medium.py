@@ -1,6 +1,7 @@
 """Test for medium."""
 import json
 import logging
+from datetime import date, datetime
 
 import pytest
 from scrapy.http import HtmlResponse, Request
@@ -70,6 +71,7 @@ class TestMediumSpider:
         assert _next is False
 
     def _test_parse_links_paging(self, obj):
+        """Test parse_links pagination url."""
         pagination_url = self.convert_to_pagination_url(obj)
         logger.debug(f"User post's pagination url: {pagination_url}")
         assert isinstance(pagination_url, str)
@@ -85,3 +87,30 @@ class TestMediumSpider:
             page=obj['payload']['paging']['next']['page']
         )
         return url
+
+    def test_parse_post_item(self, betamax_session):
+        """Test parse post item."""
+        response = self.mock_scrapy_response(
+            betamax_session=betamax_session,
+            url='https://medium.com/8045c82962e2/625a07c75000?format=json'
+        )
+        data = response.text.replace('])}while(1);</x>', '', 1)
+        obj = json.loads(data)['payload']
+        item = self.medium_spider.parse_post_item(post=obj)
+        logger.debug(item)
+        assert isinstance(item['title'], str)
+        assert len(item['title']) > 0, 'Article title is empty string.'
+        assert isinstance(item['created_time'], (datetime, date))
+        assert isinstance(item['author'], str)
+        assert len(item['author']) > 0, 'Article author is empty string.'
+        assert isinstance(item['author_id'], str)
+        assert item['author_id'] == '8045c82962e2'
+        assert isinstance(item['content'], str)
+        assert len(item['content']) > 0, 'Article content is empty string.'
+        assert isinstance(item['comment_count'], int)
+        assert item['comment_count'] > 0
+        assert isinstance(item['like_count'], int)
+        assert item['like_count'] > 0
+        assert item['link'][:4] == 'http'
+        assert isinstance(item['tag'], str)
+        assert len(item['tag']) > 0, 'Article tag is empty string.'
