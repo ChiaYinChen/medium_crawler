@@ -98,19 +98,53 @@ class TestMediumSpider:
         obj = json.loads(data)['payload']
         item = self.medium_spider.parse_post_item(post=obj)
         logger.debug(item)
+        self._test_title(item)
+        self._test_time(item)
+        self._test_author(item)
+        self._test_content(item)
+        self._test_tag(item)
+        self._test_link(item)
+        self._test_statistics_count(item)
+
+    def _test_title(self, item):
+        """Test article title."""
+        logger.debug(f'title: {item["title"]}')
         assert isinstance(item['title'], str)
         assert len(item['title']) > 0, 'Article title is empty string.'
+
+    def _test_time(self, item):
+        """Test article created time."""
         assert isinstance(item['created_time'], (datetime, date))
+
+    def _test_author(self, item):
+        """Test article author."""
+        logger.debug(f'author: {item["author"]}')
         assert isinstance(item['author'], str)
         assert len(item['author']) > 0, 'Article author is empty string.'
+        logger.debug(f'author_id: {item["author_id"]}')
         assert isinstance(item['author_id'], str)
         assert item['author_id'] == '8045c82962e2'
+
+    def _test_content(self, item):
+        """Test article content."""
         assert isinstance(item['content'], str)
         assert len(item['content']) > 0, 'Article content is empty string.'
-        assert isinstance(item['comment_count'], int)
-        assert item['comment_count'] > 0
-        assert isinstance(item['like_count'], int)
-        assert item['like_count'] > 0
-        assert item['link'][:4] == 'http'
+
+    def _test_tag(self, item):
+        """Test article tag."""
+        logger.debug(f'tag: {item["tag"]}')
         assert isinstance(item['tag'], str)
         assert len(item['tag']) > 0, 'Article tag is empty string.'
+
+    def _test_link(self, item):
+        """Test article link."""
+        assert item['link'][:4] == 'http'
+
+    def _test_statistics_count(self, item):
+        """Test article `comment count` and `like count`."""
+        logger.debug(f'comment count: {item["comment_count"]}')
+        assert isinstance(item['comment_count'], int)
+        assert item['comment_count'] > 0
+        logger.debug(f'like count: {item["like_count"]}')
+        assert isinstance(item['like_count'], int)
+        assert item['like_count'] > 0
