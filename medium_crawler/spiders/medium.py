@@ -85,17 +85,54 @@ class MediumPost(scrapy.Spider):
                     callback=self.parse_links
                 )
 
-    def parse_links(self, response: scrapy.http.Response,
-                    _next: bool = True) -> Iterator[scrapy.Request]:
+    def parse_links_logic(
+        self,
+        response: scrapy.http.Response,
+        posts: dict,
+        user_id: str
+    ) -> Union[bool, Iterator[scrapy.Request]]:
+        """Parse links logic.
+
+        Args:
+            response (scrapy.http.Response): scrapy response
+            posts (dict): medium user post link items
+            user_id (str): user id
+
+        Yields:
+            bool: if false, stop to crawl the next post
+            scrapy.Request: scrapy request object
+        """
+        for k, v in posts.items():
+            updated_time = datetime.fromtimestamp(v['updatedAt'] / 1000)
+            if updated_time.date() < self.start_date.date():
+                _next = False
+                yield _next
+                break
+            if user_id == v['creatorId']:
+                url = (
+                    f"https://medium.com/{user_id}/{v['id']}?format=json"
+                )
+                yield scrapy.Request(
+                    url=url,
+                    meta=response.meta,
+                    callback=self.post
+                )
+            else:
+                logging.warning('Not this post creator!')
+
+    def parse_links(
+        self,
+        response: scrapy.http.Response
+    ) -> Iterator[scrapy.Request]:
         """Extract links from medium API.
 
         Args:
             response (scrapy.http.Response): scrapy response
-            _next (bool): if true, continue to crawl the next page
 
         Yields:
             scrapy.Request: scrapy request object
         """
+        _next = True  # if true, continue to crawl the next page
         obj = json.loads(response.text.replace('])}while(1);</x>', '', 1))
         if response.meta.get('user_id'):
             user_id = response.meta['user_id']
@@ -104,22 +141,16 @@ class MediumPost(scrapy.Spider):
             response.meta['user_id'] = user_id
         posts = obj.get('payload', {}).get('references', {}).get('Post')
         if posts:
-            for k, v in posts.items():
-                updated_time = datetime.fromtimestamp(v['updatedAt'] / 1000)
-                if updated_time.date() < self.start_date.date():
-                    _next = False
-                    break
-                if user_id == v['creatorId']:
-                    url = (
-                        f"https://medium.com/{user_id}/{v['id']}?format=json"
-                    )
-                    yield scrapy.Request(
-                        url=url,
-                        meta=response.meta,
-                        callback=self.post
-                    )
+            stop_next_or_request = self.parse_links_logic(
+                response=response,
+                posts=posts,
+                user_id=user_id
+            )
+            for item in stop_next_or_request:
+                if isinstance(item, scrapy.http.Request):
+                    yield item
                 else:
-                    logging.warning('Not this post creator!')
+                    _next = item
         else:
             logging.warning(f'Unable to find post for {response.meta["uid"]}')
 
@@ -142,30 +173,25 @@ class MediumPost(scrapy.Spider):
                 callback=self.parse_links
             )
 
-    def post(
-        self, response: scrapy.http.Response
-    ) -> Union[Iterator[items.ArticleItem], Iterator[scrapy.Request]]:
-        """Get medium posts.
+    def parse_post_item(self, post: dict) -> Iterator[items.ArticleItem]:
+        """Parse medium post item.
 
         Args:
-            response (scrapy.http.Response): scrapy response
+            post (dict): medium post item
 
-        Yields:
+        Returns:
             items.ArticleItem: ArticleItem object
-            scrapy.Request: scrapy request object
         """
-        data = response.text.replace('])}while(1);</x>', '', 1)
-        obj = json.loads(data)['payload']
-        link = obj['value']['mediumUrl']
-        uid = [i[1] for i in obj['references']['User'].items()][0]['username']
-        author = [i[1] for i in obj['references']['User'].items()][0]['name']
-        author_id = [i[1] for i in obj['references']['User'].items()][0]['userId']  # noqa: E501
-        title = obj['value']['title']
-        content = '\n'.join([i['text'] for i in obj['value']['content']['bodyModel']['paragraphs']])  # noqa: E501
-        comment_count = int(obj['value']['virtuals']['responsesCreatedCount'])
-        like_count = int(obj['value']['virtuals']['totalClapCount'])
-        created_time = datetime.fromtimestamp(obj['value']['createdAt'] / 1000)
-        tag = ','.join([i['name'] for i in obj['value']['virtuals']['tags']])
+        link = post['value']['mediumUrl']
+        uid = [i[1] for i in post['references']['User'].items()][0]['username']
+        author = [i[1] for i in post['references']['User'].items()][0]['name']
+        author_id = [i[1] for i in post['references']['User'].items()][0]['userId']  # noqa: E501
+        title = post['value']['title']
+        content = '\n'.join([i['text'] for i in post['value']['content']['bodyModel']['paragraphs']])  # noqa: E501
+        comment_count = int(post['value']['virtuals']['responsesCreatedCount'])
+        like_count = int(post['value']['virtuals']['totalClapCount'])
+        created_time = datetime.fromtimestamp(post['value']['createdAt'] / 1000)  # noqa: E501
+        tag = ','.join([i['name'] for i in post['value']['virtuals']['tags']])
         post_record = items.ArticleItem(
             uid=uid,
             link=link,
@@ -180,8 +206,27 @@ class MediumPost(scrapy.Spider):
             article_type='post',
             tag=tag,
         )
+        return post_record
+
+    def post(
+        self,
+        response: scrapy.http.Response
+    ) -> Union[Iterator[items.ArticleItem], Iterator[scrapy.Request]]:
+        """Get medium posts.
+
+        Args:
+            response (scrapy.http.Response): scrapy response
+
+        Yields:
+            items.ArticleItem: ArticleItem object
+            scrapy.Request: scrapy request object
+        """
+        data = response.text.replace('])}while(1);</x>', '', 1)
+        obj = json.loads(data)['payload']
+        post_record = self.parse_post_item(post=obj)
         yield post_record
-        if comment_count > 0:
+
+        if post_record['comment_count'] > 0:
             post_id = obj['value']['id']
             response.meta['post_id'] = post_id
             response.meta['post_record'] = post_record
@@ -194,8 +239,54 @@ class MediumPost(scrapy.Spider):
                 callback=self.comment
             )
 
+    def parse_comment_item(
+        self,
+        posts: dict,
+        response: scrapy.http.Response
+    ) -> Iterator[scrapy.Request]:
+        """Parse medium comment item.
+
+        Args:
+            posts (dict): medium comment items
+            response (scrapy.http.Response): scrapy response
+
+        Yields:
+            scrapy.Request: scrapy request object
+        """
+        post_record = response.meta['post_record']
+        for post_id, post_item in posts.items():
+            if post_id != response.meta['post_id']:
+                post = posts[post_id]
+                author_id = post['creatorId']
+                content = '\n'.join([i['text'] for i in post['previewContent2']['bodyModel']['paragraphs']])  # noqa: E501
+                comment_count = int(post['virtuals']['responsesCreatedCount'])  # noqa: E501
+                like_count = int(post['virtuals']['totalClapCount'])  # noqa: E501
+                created_time = datetime.fromtimestamp(post['createdAt'] / 1000)  # noqa: E501
+                link = f'https://medium.com/{author_id}/{post_id}'
+                comment_record = items.ArticleItem(
+                    uid=post_record['uid'],
+                    link=link,
+                    author_id=author_id,
+                    poster=post_record['author'],
+                    title=post_record['title'],
+                    content=content,
+                    comment_count=comment_count,
+                    like_count=like_count,
+                    created_time=created_time,
+                    article_type='comment',
+                )
+                yield scrapy.Request(
+                    url=f'{link}?format=json',
+                    meta={
+                        'comment_record': comment_record,
+                        'author_id': author_id
+                    },
+                    callback=self.get_comment_author_name
+                )
+
     def comment(
-        self, response: scrapy.http.Response
+        self,
+        response: scrapy.http.Response
     ) -> Iterator[scrapy.Request]:
         """Get medium comments.
 
@@ -205,40 +296,11 @@ class MediumPost(scrapy.Spider):
         Yields:
             scrapy.Request: scrapy request object
         """
-        post_record = response.meta['post_record']
         data = response.text.replace('])}while(1);</x>', '', 1)
         obj = json.loads(data)
         posts = obj.get('payload', {}).get('references', {}).get('Post')
         if posts:
-            for post_id, post_item in posts.items():
-                if post_id != response.meta['post_id']:
-                    post = posts[post_id]
-                    author_id = post['creatorId']
-                    content = '\n'.join([i['text'] for i in post['previewContent2']['bodyModel']['paragraphs']])  # noqa: E501
-                    comment_count = int(post['virtuals']['responsesCreatedCount'])  # noqa: E501
-                    like_count = int(post['virtuals']['totalClapCount'])  # noqa: E501
-                    created_time = datetime.fromtimestamp(post['createdAt'] / 1000)  # noqa: E501
-                    link = f'https://medium.com/{author_id}/{post_id}'
-                    comment_record = items.ArticleItem(
-                        uid=post_record['uid'],
-                        link=link,
-                        author_id=author_id,
-                        poster=post_record['author'],
-                        title=post_record['title'],
-                        content=content,
-                        comment_count=comment_count,
-                        like_count=like_count,
-                        created_time=created_time,
-                        article_type='comment',
-                    )
-                    yield scrapy.Request(
-                        url=f'{link}?format=json',
-                        meta={
-                            'comment_record': comment_record,
-                            'author_id': author_id
-                        },
-                        callback=self.get_comment_author_name
-                    )
+            yield from self.parse_comment_item(posts, response)
 
         # paging
         if (
@@ -258,7 +320,8 @@ class MediumPost(scrapy.Spider):
             )
 
     def get_comment_author_name(
-        self, response: scrapy.http.Response
+        self,
+        response: scrapy.http.Response
     ) -> Iterator[items.ArticleItem]:
         """Get comment author name.
 
