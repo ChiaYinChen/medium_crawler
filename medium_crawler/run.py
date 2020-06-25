@@ -1,6 +1,7 @@
 """Medium Crawler Command Line Tools."""
 import argparse
 import logging
+from typing import List
 
 from scrapy.crawler import CrawlerRunner
 from scrapy.utils.log import configure_logging
@@ -16,8 +17,12 @@ settings = get_project_settings()
 configure_logging(settings)
 
 
-def process_command():
-    """Create the crawler parser."""
+def process_command() -> argparse.Namespace:
+    """Create the crawler parser.
+
+    Returns:
+        argparse.Namespace: argparse object
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--spider',
                         help='Please input the scrapy spider name',
@@ -26,8 +31,13 @@ def process_command():
     return parser.parse_args()
 
 
-def start_crawlers(spider_name, rules):
-    """Start specified spiders from cmd with scrapy core api."""
+def start_crawlers(spider_name: str, rules: List[Rule]) -> None:
+    """Start specified spiders from cmd with scrapy core api.
+
+    Args:
+        spider_name (str): scrapy spider name
+        rules (List[Rule]): pass arguments for spider from database
+    """
     runner = CrawlerRunner(settings)
     crawlers = runner.spider_loader.list()
     crawlers = [c for c in crawlers if c.__contains__(spider_name)]

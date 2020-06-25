@@ -4,3 +4,7 @@
 .envrc
 **/__pycache__
 README.md
+*.db
+**/.pytest_cache
+**/.tox
+tests/cassettes/*
