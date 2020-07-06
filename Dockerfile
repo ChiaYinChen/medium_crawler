@@ -9,5 +9,5 @@ RUN apk add --no-cache --update tzdata git vim curl python3-dev openssl-dev \
 ENV TZ=Asia/Taipei
 ENV VISUAL=vim
 
-RUN pip3 install --no-cache-dir --upgrade pip pipenv
+RUN pip3 install --no-cache-dir --upgrade pip pipenv==2018.11.26
 RUN (cd /medium_crawler && pipenv install)
