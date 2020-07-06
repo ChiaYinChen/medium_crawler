@@ -37,6 +37,12 @@ Run a spider from a script
 $ python medium_crawler/run.py --spider medium
 ```
 
+## Running the tests
+
+```
+tox
+```
+
 ---
 
 # Docker
