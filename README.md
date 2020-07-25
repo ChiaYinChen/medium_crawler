@@ -24,14 +24,31 @@ $ pipenv install --dev
 
 ## Usage
 
-Run a spider via `scrapy crawl`
+### Run a spider via `scrapy crawl`
+
+- Syntax: `scrapy crawl medium <arguments>`
+
+Pass arguments to spider using the `-a` option.
+
+Supported arguments:
+
+- `usernames`: comma-separated medium usernames
+- `date`: crawling date (YYYYMMDD)
+- `back`: number of days to be crawled
+- `urls`: comma-separated url list
+
+\* If `urls` is set, `usernames` will be ignored.
+
+\* If `date` is set, `back` will be ignored.
+
+Usage examples:
 
 ```
 $ scrapy crawl medium -a usernames=chiayinchen -a date=20180801
 $ scrapy crawl medium -a urls=https://medium.com/8045c82962e2/be290cd1f9d8
 ```
 
-Run a spider from a script
+### Run a spider from a script
 
 ```
 $ python medium_crawler/run.py --spider medium
