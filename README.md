@@ -26,20 +26,20 @@ $ pipenv install --dev
 
 ### Run a spider via `scrapy crawl`
 
-- Syntax: `scrapy crawl medium <arguments>`
+```
+Syntax: scrapy crawl medium <arguments>
 
 Pass arguments to spider using the `-a` option.
 
 Supported arguments:
+	usernames: comma-separated medium usernames
+	date: crawling date (YYYYMMDD)
+	back: number of days to be crawled
+	urls: comma-separated url list
 
-- `usernames`: comma-separated medium usernames
-- `date`: crawling date (YYYYMMDD)
-- `back`: number of days to be crawled
-- `urls`: comma-separated url list
-
-\* If `urls` is set, `usernames` will be ignored.
-
-\* If `date` is set, `back` will be ignored.
+* If `urls` is set, `usernames` will be ignored.
+* If `date` is set, `back` will be ignored.
+```
 
 Usage examples:
 
