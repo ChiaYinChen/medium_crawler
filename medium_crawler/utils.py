@@ -7,7 +7,7 @@ launch_logger = logging.getLogger('launch_crawlers_logger')
 
 
 def timer(func):
-    """Loging function run time."""
+    """Logging function run time."""
     @functools.wraps(func)
     def wrapper_decorator(*args, **kwargs):
         start_time = time.perf_counter()

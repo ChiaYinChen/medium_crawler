@@ -19,6 +19,7 @@ class MediumPost(scrapy.Spider):
         """Pass extra arguments for spider.
 
         If `urls` is set, `usernames` will be ignored.
+        If `date` is set, `back` will be ignored.
 
         Args:
             usernames (Union[str, None]): comma-separated medium usernames
