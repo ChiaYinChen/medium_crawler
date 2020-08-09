@@ -22,7 +22,8 @@ class MediumPost(scrapy.Spider):
         If `date` is set, `back` will be ignored.
 
         Args:
-            usernames (Union[str, None]): comma-separated medium usernames
+            usernames (Union[str, None]): comma-separated writer's
+                                          profile page names
             date (Union[str, None]): crawling date (YYYYMMDD)
             back (Union[str, int, None]): number of days to be crawled
             urls (Union[str, None]): comma-separated url list
