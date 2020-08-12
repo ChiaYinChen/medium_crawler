@@ -17,6 +17,7 @@ RETRY_TIMES = 10
 
 ITEM_PIPELINES = {
     'medium_crawler.pipelines.DefaultValuesPipeline': 100,
+    'medium_crawler.pipelines.AutoFetchTime': 200,
 }
 
 DOWNLOADER_MIDDLEWARES = {
