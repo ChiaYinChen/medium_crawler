@@ -1,5 +1,4 @@
 """Scrapy settings."""
-import os
 
 BOT_NAME = 'medium_crawler'
 SPIDER_MODULES = ['medium_crawler.spiders']
@@ -23,5 +22,3 @@ ITEM_PIPELINES = {
 DOWNLOADER_MIDDLEWARES = {
     'medium_crawler.middlewares.ProxyMiddleware': 100,
 }
-
-PROXY_DEPTH = os.environ.get('PROXY_DEPTH', 0)

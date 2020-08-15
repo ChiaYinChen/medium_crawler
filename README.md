@@ -20,7 +20,6 @@ $ pipenv install --dev
 | ----------------------------- | --------------------- | ----------- |
 | PROXY                         | http://127.0.0.1:8787 | YES         |
 | PROXY_ENABLED                 | FALSE                 | YES         |
-| PROXY_DEPTH                   | 0                     | YES         |
 
 ## Usage
 
