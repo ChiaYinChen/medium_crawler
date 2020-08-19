@@ -1,5 +1,4 @@
 """Scrapy settings."""
-import os
 
 BOT_NAME = 'medium_crawler'
 SPIDER_MODULES = ['medium_crawler.spiders']
@@ -17,10 +16,9 @@ RETRY_TIMES = 10
 
 ITEM_PIPELINES = {
     'medium_crawler.pipelines.DefaultValuesPipeline': 100,
+    'medium_crawler.pipelines.AutoFetchTime': 200,
 }
 
 DOWNLOADER_MIDDLEWARES = {
     'medium_crawler.middlewares.ProxyMiddleware': 100,
 }
-
-PROXY_DEPTH = os.environ.get('PROXY_DEPTH', 0)

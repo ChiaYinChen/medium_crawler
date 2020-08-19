@@ -9,7 +9,6 @@ class ArticleItem(scrapy.Item):
 
     uid = scrapy.Field()
     link = scrapy.Field()
-    image_url = scrapy.Field(default=None)
     author = scrapy.Field(default=None)
     author_id = scrapy.Field(default=None)
     poster = scrapy.Field()
