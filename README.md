@@ -1,5 +1,7 @@
 # Medium Crawler
 
+[![Build Status](https://travis-ci.com/ChiaYinChen/medium_crawler.svg?branch=master)](https://travis-ci.com/ChiaYinChen/medium_crawler)
+
 ## Installation
 
 Install requirements
@@ -66,16 +68,16 @@ $ tox
 
 # Docker
 
-Build docker image
+Pull docker image
 
 ```
-$ docker build -t medium-crawler:<version> . --no-cache
+$ docker pull chiayinchen/medium-crawler:<version>
 ```
 
 Build docker container
 
 ```
-$ docker run --rm -it -d --name <container_name> medium-crawler:<version>
+$ docker run --rm -it -d --name <container_name> chiayinchen/medium-crawler:<version>
 ```
 
 Run a command in a running container
