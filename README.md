@@ -1,6 +1,6 @@
 # Medium Crawler
 
-[![Build Status](https://travis-ci.com/ChiaYinChen/medium_crawler.svg?branch=master)](https://travis-ci.com/ChiaYinChen/medium_crawler)
+[![Build Status](https://app.travis-ci.com/ChiaYinChen/medium_crawler.svg?branch=master)](https://app.travis-ci.com/ChiaYinChen/medium_crawler)
 
 ## Installation
 
